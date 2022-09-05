@@ -126,7 +126,8 @@ runBHoogle dbPath = do
                       }
           
   -- And run brick
-  void $ B.customMain (V.mkVty V.defaultConfig) (Just chan) app st
+  initialVty <- V.mkVty V.defaultConfig
+  void $ B.customMain initialVty (V.mkVty V.defaultConfig) (Just chan) app st
 
   where
     -- | Get the local time
@@ -178,7 +179,7 @@ handleEvent st ev =
 
                 _ -> do
                   -- Let the editor handle all other events
-                  r <- BE.handleEditorEvent ve $ st ^. stEditType
+                  r <- BE.handleEditorEvent (B.VtyEvent ve) $ st ^. stEditType
                   next <- liftIO . searchAhead doSearch $ st & stEditType .~ r 
                   B.continue next
 
@@ -189,7 +190,7 @@ handleEvent st ev =
                 K.KBackTab -> B.continue $ st & stFocus %~ BF.focusPrev   -- Focus previous
                 _ -> do
                   -- Let the editor handle all other events
-                  r <- BE.handleEditorEvent ve $ st ^. stEditText
+                  r <- BE.handleEditorEvent (B.VtyEvent ve) $ st ^. stEditText
                   B.continue . filterResults $ st & stEditText .~ r
 
             Just ListResults ->
